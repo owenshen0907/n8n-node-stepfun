@@ -30,6 +30,30 @@ const OUTPUT_FORMAT_MAP: Record<string, { mimeType: string; ext: string }> = {
   opus: { mimeType: 'audio/opus', ext: 'opus' },
 };
 
+const stripSurroundingQuotes = (value: string): string => {
+  if (value.length < 2) {
+    return value;
+  }
+
+  const isDoubleQuoted = value.startsWith('"') && value.endsWith('"');
+  const isSingleQuoted = value.startsWith("'") && value.endsWith("'");
+
+  if (isDoubleQuoted || isSingleQuoted) {
+    return value.slice(1, -1);
+  }
+
+  return value;
+};
+
+const normalizeOptionValue = (value: unknown): string => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  const text = String(value);
+  return stripSurroundingQuotes(text);
+};
+
 export class StepFunTts implements INodeType {
   description: INodeTypeDescription = {
     displayName: 'Stepfun.ai',
@@ -140,10 +164,15 @@ export class StepFunTts implements INodeType {
             : (parsed.data ?? parsed.voices ?? []);
 
           if (voices.length) {
-            return voices.map((voice: IDataObject) => ({
-              name: (voice.name ?? voice.display_name ?? voice.id ?? '') as string,
-              value: (voice.id ?? voice.voice_id ?? voice.name ?? '') as string,
-            }));
+            return voices.map((voice: IDataObject) => {
+              const v = voice as Record<string, unknown>;
+              const rawName = (v.name ?? v.display_name ?? v.label ?? v.voice_name ?? v.id ?? v.voice_id ?? JSON.stringify(voice)) as string;
+              const rawValue = (v.id ?? v.voice_id ?? v.voice ?? v.name ?? JSON.stringify(voice)) as string;
+              return {
+                name: normalizeOptionValue(rawName),
+                value: normalizeOptionValue(rawValue),
+              };
+            });
           }
         } catch {
           // API unavailable, fall through to defaults
