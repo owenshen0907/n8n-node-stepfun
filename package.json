@@ -1,5 +1,5 @@
 {
-  "name": "n8n-nodes-stepfun",
+  "name": "n8n-node-stepfun",
   "version": "0.1.0",
   "private": true,
   "description": "n8n community node: Stepfun.ai TTS (text-to-speech)",

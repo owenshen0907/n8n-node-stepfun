@@ -10,8 +10,8 @@ n8n 社区节点，集成 Stepfun.ai 文本转语音（TTS）能力。
 
 ```bash
 # 克隆并编译
-git clone https://github.com/owenshen0907/n8n-node.git
-cd n8n-node
+git clone https://github.com/owenshen0907/n8n-node-stepfun.git
+cd n8n-node-stepfun
 npm install
 npm run build
 
