@@ -1,10 +1,36 @@
 {
-  "name": "n8n-node-stepfun",
-  "version": "0.1.0",
-  "private": true,
+  "name": "@owenshen0907/n8n-nodes-stepfun-tts",
+  "version": "1.0.1",
   "description": "n8n community node: Stepfun.ai TTS (text-to-speech)",
-  "license": "UNLICENSED",
-  "homepage": "https://platform.stepfun.com/",
+  "license": "MIT",
+  "author": "Owen Shen <owenshen123@outlook.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/owenshen0907/n8n-node-stepfun.git"
+  },
+  "bugs": {
+    "url": "https://github.com/owenshen0907/n8n-node-stepfun/issues"
+  },
+  "keywords": [
+    "n8n",
+    "n8n-community-node",
+    "n8n-community-node-package",
+    "stepfun",
+    "tts",
+    "text-to-speech",
+    "ai",
+    "automation"
+  ],
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "credentials",
+    "nodes",
+    "icons",
+    "package.json",
+    "README.md"
+  ],
+  "homepage": "https://platform.stepfun.ai",
   "scripts": {
     "n8n-node-dev": "node ./scripts/n8n-node-dev.cjs",
     "build": "tsc -p tsconfig.json && node ./scripts/copy-assets.cjs",
@@ -15,7 +41,9 @@
     "nodes": [
       "dist/nodes/StepFunTts/StepFunTts.node.js"
     ],
-    "credentials": ["dist/credentials/StepFunApi.credentials.js"]
+    "credentials": [
+      "dist/credentials/StepFunApi.credentials.js"
+    ]
   },
   "devDependencies": {
     "@types/node": "^25.1.0",

@@ -6,5 +6,10 @@
     "lib": ["es2022", "dom"],
     "target": "es2022"
   },
-  "include": ["credentials/**/*.credentials.ts", "nodes/**/*.node.ts"]
+  "include": [
+    "index.ts",
+    "src/**/*.ts",
+    "credentials/**/*.credentials.ts",
+    "nodes/**/*.node.ts"
+  ]
 }
