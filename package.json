@@ -1,6 +1,6 @@
 {
-  "name": "@owenshen0907/n8n-nodes-stepfun-tts",
-  "version": "1.0.1",
+  "name": "@stepfun/n8n-nodes-stepfun-integration",
+  "version": "1.0.4",
   "description": "n8n community node: Stepfun.ai TTS (text-to-speech)",
   "license": "MIT",
   "author": "Owen Shen <owenshen123@outlook.com>",
@@ -36,6 +36,9 @@
     "build": "tsc -p tsconfig.json && node ./scripts/copy-assets.cjs",
     "build:watch": "tsc -p tsconfig.json --watch",
     "new": "npm run n8n-node-dev -- new"
+  },
+  "dependencies": {
+    "tslib": "^2.6.2"
   },
   "n8n": {
     "nodes": [
