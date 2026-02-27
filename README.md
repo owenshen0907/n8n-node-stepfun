@@ -8,7 +8,7 @@
 ## 功能说明
 
 - 将文本转换为语音音频
-- 支持输出格式：`mp3`、`aac`、`flac`、`wav`、`pcm`、`opus`
+- 支持输出格式：`mp3`、`opus`、`aac`、`flac`、`wav`、`pcm`
 - 输出 `binary.audio`，可直接接入后续节点
 
 ## 安装方式

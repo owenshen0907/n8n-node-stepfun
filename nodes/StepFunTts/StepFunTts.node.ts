@@ -3,6 +3,7 @@ import type {
   IExecuteFunctions,
   IHttpRequestOptions,
   ILoadOptionsFunctions,
+  NodeConnectionType,
   INodeExecutionData,
   INodePropertyOptions,
   INodeType,
@@ -23,12 +24,14 @@ const DEFAULT_VOICES: Array<{ name: string; value: string }> = [
 
 const OUTPUT_FORMAT_MAP: Record<string, { mimeType: string; ext: string }> = {
   mp3: { mimeType: 'audio/mpeg', ext: 'mp3' },
+  opus: { mimeType: 'audio/opus', ext: 'opus' },
   aac: { mimeType: 'audio/aac', ext: 'aac' },
   flac: { mimeType: 'audio/flac', ext: 'flac' },
   wav: { mimeType: 'audio/wav', ext: 'wav' },
   pcm: { mimeType: 'audio/pcm', ext: 'pcm' },
-  opus: { mimeType: 'audio/opus', ext: 'opus' },
 };
+
+const ALLOWED_OUTPUT_FORMATS = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
 
 const stripSurroundingQuotes = (value: string): string => {
   if (value.length < 2) {
@@ -82,7 +85,13 @@ export class StepFunTts implements INodeType {
     defaults: {
       name: 'Convert Text Into Speech',
     },
-    inputs: ['main'],
+    inputs: [
+      {
+        type: 'main' as NodeConnectionType,
+        required: false,
+      },
+    ],
+    requiredInputs: 0,
     outputs: ['main'],
     credentials: [
       {
@@ -130,11 +139,11 @@ export class StepFunTts implements INodeType {
         type: 'options',
         options: [
           { name: 'MP3', value: 'mp3' },
+          { name: 'Opus', value: 'opus' },
           { name: 'AAC', value: 'aac' },
           { name: 'FLAC', value: 'flac' },
           { name: 'WAV', value: 'wav' },
           { name: 'PCM', value: 'pcm' },
-          { name: 'Opus', value: 'opus' },
         ],
         default: 'mp3',
         description: 'The audio format for the output file',
@@ -184,7 +193,9 @@ export class StepFunTts implements INodeType {
   };
 
   async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-    const items = this.getInputData();
+    const inputItems = this.getInputData();
+    const hasInputItems = inputItems.length > 0;
+    const items = hasInputItems ? inputItems : ([{ json: {} }] as INodeExecutionData[]);
     const returnData: INodeExecutionData[] = [];
 
     const credentials = (await this.getCredentials('stepFunApi')) as unknown as { baseUrl: string };
@@ -200,8 +211,15 @@ export class StepFunTts implements INodeType {
         const voice = this.getNodeParameter('voice', itemIndex) as string;
         const model = this.getNodeParameter('model', itemIndex) as string;
         const outputFormat = this.getNodeParameter('outputFormat', itemIndex) as string;
+        if (!ALLOWED_OUTPUT_FORMATS.includes(outputFormat)) {
+          throw new NodeOperationError(
+            this.getNode(),
+            `Invalid output format: ${outputFormat}. Allowed formats: ${ALLOWED_OUTPUT_FORMATS.join(', ')}`,
+            { itemIndex },
+          );
+        }
 
-        const formatInfo = OUTPUT_FORMAT_MAP[outputFormat] ?? OUTPUT_FORMAT_MAP.mp3;
+        const formatInfo = OUTPUT_FORMAT_MAP[outputFormat];
 
         const body: IDataObject = {
           model,
@@ -232,7 +250,7 @@ export class StepFunTts implements INodeType {
           formatInfo.mimeType,
         );
 
-        returnData.push({
+        const outputItem: INodeExecutionData = {
           json: {
             text,
             voice,
@@ -242,8 +260,13 @@ export class StepFunTts implements INodeType {
           binary: {
             audio: binaryData,
           },
-          pairedItem: { item: itemIndex },
-        });
+        };
+
+        if (hasInputItems) {
+          outputItem.pairedItem = { item: itemIndex };
+        }
+
+        returnData.push(outputItem);
       } catch (error) {
         const errorResponse: JsonObject =
           typeof error === 'object' && error !== null
