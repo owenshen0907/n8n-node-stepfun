@@ -22,15 +22,6 @@ const DEFAULT_VOICES: Array<{ name: string; value: string }> = [
   { name: 'Confident Gentleman (Chinese)', value: 'zixinnansheng' },
 ];
 
-const OUTPUT_FORMAT_MAP: Record<string, { mimeType: string; ext: string }> = {
-  mp3: { mimeType: 'audio/mpeg', ext: 'mp3' },
-  opus: { mimeType: 'audio/opus', ext: 'opus' },
-  aac: { mimeType: 'audio/aac', ext: 'aac' },
-  flac: { mimeType: 'audio/flac', ext: 'flac' },
-  wav: { mimeType: 'audio/wav', ext: 'wav' },
-  pcm: { mimeType: 'audio/pcm', ext: 'pcm' },
-};
-
 const ALLOWED_OUTPUT_FORMATS = ['mp3', 'opus', 'aac', 'flac', 'wav', 'pcm'];
 
 const stripSurroundingQuotes = (value: string): string => {
@@ -55,6 +46,26 @@ const normalizeOptionValue = (value: unknown): string => {
 
   const text = String(value);
   return stripSurroundingQuotes(text);
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const extractReturnUrlResponse = (
+  payload: unknown,
+): { created?: number; audioUrl?: string } => {
+  if (!isRecord(payload)) {
+    return {};
+  }
+
+  const data = isRecord(payload.data) ? payload.data : undefined;
+  const created = typeof payload.created === 'number' ? payload.created : undefined;
+  const audioUrl = typeof data?.url === 'string' && data.url.trim().length > 0 ? data.url : undefined;
+
+  return {
+    created,
+    audioUrl,
+  };
 };
 
 export class StepFunTts implements INodeType {
@@ -146,7 +157,7 @@ export class StepFunTts implements INodeType {
           { name: 'PCM', value: 'pcm' },
         ],
         default: 'mp3',
-        description: 'The audio format for the output file',
+        description: 'The audio format of the generated file URL',
       },
     ],
   };
@@ -219,13 +230,12 @@ export class StepFunTts implements INodeType {
           );
         }
 
-        const formatInfo = OUTPUT_FORMAT_MAP[outputFormat];
-
         const body: IDataObject = {
           model,
           input: text,
           voice,
           response_format: outputFormat,
+          return_url: true,
         };
 
         const requestOptions: IHttpRequestOptions = {
@@ -233,22 +243,22 @@ export class StepFunTts implements INodeType {
           url: `${baseUrl}/audio/speech`,
           body,
           json: true,
-          encoding: 'arraybuffer',
         };
 
-        const audioArrayBuffer = (await this.helpers.httpRequestWithAuthentication.call(
+        const urlResponse = await this.helpers.httpRequestWithAuthentication.call(
           this,
           'stepFunApi',
           requestOptions,
-        )) as ArrayBuffer;
-
-        const audioBuffer = Buffer.from(audioArrayBuffer);
-        const fileName = `stepfun-tts.${formatInfo.ext}`;
-        const binaryData = await this.helpers.prepareBinaryData(
-          audioBuffer,
-          fileName,
-          formatInfo.mimeType,
         );
+        const parsedResponse = extractReturnUrlResponse(urlResponse);
+
+        if (!parsedResponse.audioUrl) {
+          throw new NodeOperationError(
+            this.getNode(),
+            'Stepfun API did not return `data.url`.',
+            { itemIndex },
+          );
+        }
 
         const outputItem: INodeExecutionData = {
           json: {
@@ -256,9 +266,8 @@ export class StepFunTts implements INodeType {
             voice,
             model,
             outputFormat,
-          },
-          binary: {
-            audio: binaryData,
+            created: parsedResponse.created,
+            audioUrl: parsedResponse.audioUrl,
           },
         };
 

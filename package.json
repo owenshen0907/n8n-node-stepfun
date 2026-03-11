@@ -1,6 +1,6 @@
 {
   "name": "@stepfun/n8n-nodes-stepfun-integration",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "n8n community node: Stepfun.ai TTS (text-to-speech)",
   "license": "MIT",
   "author": "Owen Shen <owenshen123@outlook.com>",

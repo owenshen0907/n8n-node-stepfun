@@ -9,7 +9,7 @@
 
 - 将文本转换为语音音频
 - 支持输出格式：`mp3`、`opus`、`aac`、`flac`、`wav`、`pcm`
-- 输出 `binary.audio`，可直接接入后续节点
+- 默认返回临时文件 URL，更方便在 n8n 下游节点中直接使用
 
 ## 安装方式
 
@@ -110,16 +110,17 @@ npm update @stepfun/n8n-nodes-stepfun-integration
 - `Text`: 需要转换的文本内容
 - `Voice`: 音色
 - `Model`: 模型（默认 `step-tts-2`）
-- `Output Format`: 音频格式
+- `Output Format`: 返回文件的音频格式
 
 ## 输出说明
 
 节点会输出：
 
 - `json`: 本次请求的参数信息
-- `binary.audio`: 生成的音频文件
+- `json.created`: 创建时间
+- `json.audioUrl`: 接口返回的 `data.url`，为含签名的临时文件 URL（有效期 12 小时）
 
-你可以将 `binary.audio` 连接到邮件、存储、HTTP 上传等后续节点。
+你可以将 `json.audioUrl` 直接传给 HTTP、下载、数据库、消息通知等下游节点。
 
 ## 常见问题
 
